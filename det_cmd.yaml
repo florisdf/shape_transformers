@@ -1,0 +1,8 @@
+work_dir: /apollo/fdf/jpdr
+resources:
+  resource_pool: gpu
+  slots: 1
+environment:
+  image: florisdf/jpdr:latest
+  environment_variables:
+    - HOME=/apollo/fdf
