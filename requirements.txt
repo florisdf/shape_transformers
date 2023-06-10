@@ -3,3 +3,6 @@ timm==0.9.2
 torchvision
 jupyter
 seaborn
+open3d==0.17.0
+trimesh==3.22.0
+point_cloud_utils==0.29.5
