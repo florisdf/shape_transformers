@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import pandas as pd
 import point_cloud_utils as pcu
 import torch
@@ -34,7 +35,8 @@ class NPHMDataset(Dataset):
         data_path: Path,
         subset: Literal['train', 'test'],
         scan_type: Literal['registration', 'scan', 'flame'] = 'registration',
-        drop_bad: bool = True
+        drop_bad: bool = True,
+        return_offsets: bool = False,
     ):
         df = get_nphm_df(data_path)
         df = df[df['subset'] == subset].reset_index(drop=True)
@@ -42,9 +44,13 @@ class NPHMDataset(Dataset):
         if drop_bad:
             df = df[~df['is_bad']].reset_index(drop=True)
 
+        if return_offsets:
+            self.mean_verts = torch.tensor(np.load('nphm_mean_vertices.npy'))
+
         self.scan_type = scan_type
         self.data_path = data_path
         self.df = df
+        self.return_offsets = return_offsets
 
     def __len__(self):
         return len(self.df)
@@ -58,7 +64,11 @@ class NPHMDataset(Dataset):
         v = torch.tensor(v)
         f = torch.tensor(f)
 
-        return v, f, subject
+        if self.return_offsets:
+            v_off = v - self.mean_verts
+            return v_off, subject
+        else:
+            return v, f, subject
 
 
 def get_nphm_df(data_path):
