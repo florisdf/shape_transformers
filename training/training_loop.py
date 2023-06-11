@@ -92,16 +92,14 @@ class TrainingLoop:
 
     def validation_epoch(self):
         # Validation loop
-        for self.val_batch_idx, (x, targets) in tqdm(
+        for self.val_batch_idx, batch in tqdm(
             enumerate(self.dl_val, start=self.val_batch_idx + 1),
             leave=False,
             total=len(self.dl_val),
         ):
-            x = x.to(self.device)
-            targets = [det_target_to_device(t, self.device) for t in targets]
-
+            batch = tuple(x.to(self.device) for x in batch)
             with torch.no_grad():
-                self.training_steps.on_validation_step((x, targets))
+                self.training_steps.on_validation_step(batch)
 
     def update_minmax_metrics(self, val_log_dict):
         for k, v in val_log_dict.items():
