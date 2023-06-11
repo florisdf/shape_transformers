@@ -40,9 +40,9 @@ class TrainingSteps:
     def on_validation_step(self, batch):
         verts, positions, labels = batch
         if self.model.disentangle_style:
-            pred_verts, pred_id_embs = model(positions, verts)
+            pred_verts, pred_id_embs = self.model(positions, verts)
         else:
-            pred_verts = model(positions, verts)
+            pred_verts = self.model(positions, verts)
 
         loss = F.mse_loss(pred_verts, verts)
         self.val_losses.append(loss)
