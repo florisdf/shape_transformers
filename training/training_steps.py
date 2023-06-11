@@ -24,7 +24,7 @@ class TrainingSteps:
         else:
             pred_verts = self.model(positions, verts)
 
-        loss = F.mse_loss(pred_verts, verts)
+        loss = torch.sqrt(F.mse_loss(pred_verts, verts))
         log_dict = {
             'MSE': loss,
         }
@@ -44,7 +44,7 @@ class TrainingSteps:
         else:
             pred_verts = self.model(positions, verts)
 
-        loss = F.mse_loss(pred_verts, verts)
+        loss = torch.sqrt(F.mse_loss(pred_verts, verts))
         self.val_losses.append(loss)
 
     def on_after_validation_epoch(self):
