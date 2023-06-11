@@ -37,15 +37,13 @@ class NPHMDataset(Dataset):
         scan_type: Literal['registration', 'scan', 'flame'] = 'registration',
         drop_bad: bool = True,
     ):
-        df = get_nphm_df(data_path)
+        df = get_nphm_df(data_path / subset)
         df = df[df['subset'] == subset].reset_index(drop=True)
 
         if drop_bad:
             df = df[~df['is_bad']].reset_index(drop=True)
 
-        if return_offsets:
-            self.mean_verts = torch.tensor(np.load('nphm_mean_vertices.npy'))
-
+        self.mean_verts = torch.tensor(np.load('nphm_mean_vertices.npy'))
         self.scan_type = scan_type
         self.data_path = data_path
         self.df = df

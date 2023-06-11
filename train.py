@@ -58,15 +58,13 @@ def run_training(
         data_path=Path(data_path),
         subset='train',
         scan_type=scan_type,
-        drop_bad=drop_pad_scans,
-        return_offsets=True,
+        drop_bad=drop_bad_scans,
     )
     ds_test = NPHMDataset(
         data_path=Path(data_path),
         subset='test',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
-        return_offsets=True,
     )
     ds_train, ds_val = kfold_split(
         ds_train,

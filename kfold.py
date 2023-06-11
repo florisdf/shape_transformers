@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 import numpy as np
+import pandas as pd
 
 
 def kfold_split(ds_train, k=5, val_fold=0, seed=15):
