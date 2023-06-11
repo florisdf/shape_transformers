@@ -3,6 +3,27 @@ from torch import nn
 from xca import XCABlock
 
 
+class ShapeTransformer(nn.Module):
+    def __init__(self, token_size=64, disentangle_style=False):
+        super().__init__()
+
+        self.encoder = ShapeTransformerEncoder(
+            token_size=token_size,
+        )
+        self.decoder = ShapeTransformerDecoder(
+            token_size=token_size,
+            disentangle_style=disentangle_style
+        )
+        self.disentangle_style = disentangle_style
+        self.token_size = token_size
+
+    def forward(self, positions, offsets, decoder_positions=None):
+        shape_code = self.encoder(positions, offsets)
+
+        decoder_positions = positions if decoder_positions is None else decoder_positions
+        return self.decoder(decoder_positions, shape_code)
+        
+
 class ShapeTransformerEncoder(nn.Module):
     """
     Comprises a sequence of 4 XCiT transformer blocks.

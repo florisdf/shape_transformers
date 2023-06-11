@@ -36,7 +36,6 @@ class NPHMDataset(Dataset):
         subset: Literal['train', 'test'],
         scan_type: Literal['registration', 'scan', 'flame'] = 'registration',
         drop_bad: bool = True,
-        return_offsets: bool = False,
     ):
         df = get_nphm_df(data_path)
         df = df[df['subset'] == subset].reset_index(drop=True)
@@ -50,7 +49,6 @@ class NPHMDataset(Dataset):
         self.scan_type = scan_type
         self.data_path = data_path
         self.df = df
-        self.return_offsets = return_offsets
 
     def __len__(self):
         return len(self.df)
@@ -64,11 +62,10 @@ class NPHMDataset(Dataset):
         v = torch.tensor(v)
         f = torch.tensor(f)
 
-        if self.return_offsets:
-            v_off = v - self.mean_verts
-            return v_off, subject
-        else:
-            return v, f, subject
+        v_off = v - self.mean_verts
+        positions = torch.clone(self.mean_verts)
+
+        return v_off, positions, subject
 
 
 def get_nphm_df(data_path):
