@@ -112,11 +112,15 @@ class ShapeTransformerDecoder(nn.Module):
             nn.Linear(token_size//8, 3),
         )
 
-        self.style_mlp_shared = nn.Sequential(
+        self.style_mlp = nn.Sequential(
             nn.Linear(token_size, token_size),
             nn.ReLU()
+            nn.Linear(token_size, token_size),
+            nn.ReLU()
+            nn.Linear(token_size, token_size),
+            nn.ReLU()
+            nn.Linear(token_size, token_size),
         )
-        self.style_mlp_affine = nn.Linear(token_size,  token_size)
 
         self.disentangle_style = disentangle_style
 
@@ -149,11 +153,8 @@ class ShapeTransformerDecoder(nn.Module):
             expr_code = self.expression_mlp(expr_code)
             shape_code = torch.cat([expr_code, id_code], dim=-1)
 
-        # Pass shape code through 4 layers with shared weights
-        for _ in range(4):
-            shape_code = self.style_mlp_shared(shape_code)
-
-        style_code = self.style_mlp_affine(shape_code)
+        # Pass shape code through style MLP
+        style_code = self.style_mlp(shape_code)
 
         # Pass tokens through transformer, each time modulating with style code
         tokens = latent_positions
