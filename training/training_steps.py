@@ -11,13 +11,13 @@ class TrainingSteps:
         model,
     ):
         self.model = model
-
         self.val_losses = []
 
     def on_before_training_epoch(self):
         pass
 
     def on_training_step(self, batch):
+        loss_dict = {}
         verts, positions, labels = batch
         if self.model.disentangle_style:
             pred_verts, pred_id_embs = self.model(positions, verts)
@@ -25,11 +25,19 @@ class TrainingSteps:
             pred_verts = self.model(positions, verts)
 
         loss = torch.sqrt(F.mse_loss(pred_verts, verts))
-        log_dict = {
-            'L2': loss,
-        }
+        loss_dict['L2'] = loss
 
-        return loss, log_dict
+        if self.model.disentangle_style:
+            assert self.model.id_classifier is not None
+            pred_logits = self.model.id_classifier(pred_id_embs)
+
+            loss_cel = F.cross_entropy_loss(pred_logits, labels)
+            loss_dict['CEL'] = loss_cel
+            loss += loss_cel
+
+        loss_dict['TotalLoss'] = loss
+
+        return loss, loss_dict
 
     def on_after_training_epoch(self):
         return {}

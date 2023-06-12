@@ -98,14 +98,14 @@ def run_training(
 
     model = ShapeTransformer(
         token_size=token_size,
-        disentangle_style=disentangle_style
+        disentangle_style=disentangle_style,
+        num_id_classes=len(ds_train.subject_to_label)
     )
+
     if load_ckpt is not None:
         model.load_state_dict(torch.load(load_ckpt))
 
-    training_steps = TrainingSteps(
-        model=model,
-    )
+    training_steps = TrainingSteps(model=model)
 
     optimizer = SGD(
         model.parameters(),

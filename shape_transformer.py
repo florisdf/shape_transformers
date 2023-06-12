@@ -4,7 +4,7 @@ from xca import XCABlock
 
 
 class ShapeTransformer(nn.Module):
-    def __init__(self, token_size=64, disentangle_style=False):
+    def __init__(self, token_size=64, disentangle_style=False, num_id_classes=None):
         super().__init__()
 
         self.encoder = ShapeTransformerEncoder(
@@ -14,6 +14,9 @@ class ShapeTransformer(nn.Module):
             token_size=token_size,
             disentangle_style=disentangle_style
         )
+        if disentangle_style:
+            assert num_id_classes is not None
+            self.id_classifier = nn.Linear(token_size, num_id_classes, bias=False)
         self.disentangle_style = disentangle_style
         self.token_size = token_size
 
