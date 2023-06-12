@@ -114,11 +114,11 @@ class ShapeTransformerDecoder(nn.Module):
 
         self.style_mlp = nn.Sequential(
             nn.Linear(token_size, token_size),
-            nn.ReLU()
+            nn.ReLU(),
             nn.Linear(token_size, token_size),
-            nn.ReLU()
+            nn.ReLU(),
             nn.Linear(token_size, token_size),
-            nn.ReLU()
+            nn.ReLU(),
             nn.Linear(token_size, token_size),
         )
 
