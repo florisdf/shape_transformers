@@ -18,7 +18,8 @@ class TrainingLoop:
         device,
         num_epochs,
         dl_train,
-        dl_val,
+        dl_val_gal,
+        dl_val_quer,
         save_unique,
         save_last,
         save_best,
@@ -30,7 +31,8 @@ class TrainingLoop:
         self.model = self.training_steps.model.to(device)
         self.num_epochs = num_epochs
         self.dl_train = dl_train
-        self.dl_val = dl_val
+        self.dl_val_gal = dl_val_gal
+        self.dl_val_quer = dl_val_quer
 
         self.minmax_metrics = {}
         self.ckpt_dir = Path(ckpts_path)
@@ -92,14 +94,19 @@ class TrainingLoop:
 
     def validation_epoch(self):
         # Validation loop
+        for batch in self.dl_val_gal:
+            batch = tuple(x.to(self.device) for x in batch)
+            with torch.no_grad():
+                self.training_steps.on_validation_gallery_step(batch)
+
         for self.val_batch_idx, batch in tqdm(
-            enumerate(self.dl_val, start=self.val_batch_idx + 1),
+            enumerate(self.dl_val_quer, start=self.val_batch_idx + 1),
             leave=False,
-            total=len(self.dl_val),
+            total=len(self.dl_val_quer),
         ):
             batch = tuple(x.to(self.device) for x in batch)
             with torch.no_grad():
-                self.training_steps.on_validation_step(batch)
+                self.training_steps.on_validation_query_step(batch)
 
     def update_minmax_metrics(self, val_log_dict):
         for k, v in val_log_dict.items():

@@ -16,7 +16,7 @@ class ShapeTransformer(nn.Module):
         )
         if disentangle_style:
             assert num_id_classes is not None
-            self.id_classifier = nn.Linear(token_size, num_id_classes, bias=False)
+            self.id_classifier = nn.Linear(token_size//2, num_id_classes, bias=False)
         self.disentangle_style = disentangle_style
         self.token_size = token_size
 
@@ -171,6 +171,6 @@ class ShapeTransformerDecoder(nn.Module):
 
         if self.disentangle_style:
             # Return identity code for supervision
-            offsets, id_code
+            return offsets, id_code
         else:
             return offsets

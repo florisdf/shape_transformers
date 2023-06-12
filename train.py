@@ -1,5 +1,6 @@
 import argparse
 from collections import OrderedDict
+from copy import deepcopy
 from pathlib import Path
 
 import torch
@@ -77,14 +78,21 @@ def run_training(
         seed=k_fold_seed,
     )
     ds_val.refresh_vert_idxs()
+
+    ds_val_gal, ds_val_quer = split_gallery_query(ds_val)
     dl_train = DataLoader(
         ds_train,
         shuffle=True,
         batch_size=batch_size,
         num_workers=num_workers,
     )
-    dl_val = DataLoader(
-        ds_val,
+    dl_val_gal = DataLoader(
+        ds_val_gal,
+        batch_size=val_batch_size,
+        num_workers=num_workers,
+    )
+    dl_val_quer = DataLoader(
+        ds_val_quer,
         batch_size=val_batch_size,
         num_workers=num_workers,
     )
@@ -120,7 +128,8 @@ def run_training(
         device=device,
         num_epochs=num_epochs,
         dl_train=dl_train,
-        dl_val=dl_val,
+        dl_val_gal=dl_val_gal,
+        dl_val_quer=dl_val_quer,
         save_unique=save_unique,
         save_last=save_last,
         save_best=save_best,
@@ -129,6 +138,21 @@ def run_training(
         ckpts_path=ckpts_path,
     )
     training_loop.run()
+
+
+def split_gallery_query(ds_val):
+    is_neutral = ds_val.df['is_neutral_closed'] | ds_val.df['is_neutral_open']
+    df_gal = ds_val.df[is_neutral].reset_index(drop=True)
+    df_quer = ds_val.df[~is_neutral].reset_index(drop=True)
+
+    ds_val_gal = ds_val
+    ds_val_quer = deepcopy(ds_val)
+
+    ds_val_gal.df = df_gal
+    ds_val_quer.df = df_quer
+
+    return ds_val_gal, ds_val_quer
+
 
 
 
