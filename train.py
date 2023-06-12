@@ -76,6 +76,7 @@ def run_training(
         val_fold=k_fold_val_fold,
         seed=k_fold_seed,
     )
+    ds_val.refresh_vert_idxs()
     dl_train = DataLoader(
         ds_train,
         shuffle=True,
