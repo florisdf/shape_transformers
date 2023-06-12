@@ -9,8 +9,10 @@ class TrainingSteps:
     def __init__(
         self,
         model,
+        cel_weight
     ):
         self.model = model
+        self.cel_weight = cel_weight
         self.val_losses = []
         self.gallery_embs = []
         self.gallery_labels = []
@@ -37,7 +39,7 @@ class TrainingSteps:
 
             loss_cel = F.cross_entropy(pred_logits, labels)
             loss_dict['CEL'] = loss_cel
-            loss = loss + 0.1 * loss_cel
+            loss = loss + self.cel_weight * loss_cel
 
         loss_dict['TotalLoss'] = loss
 

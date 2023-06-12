@@ -50,6 +50,7 @@ def run_training(
     lr=0.01,
     momentum=0.95,
     weight_decay=1e-5,
+    cel_weight=0.01,
 
     # Train
     num_epochs=30,
@@ -113,7 +114,7 @@ def run_training(
     if load_ckpt is not None:
         model.load_state_dict(torch.load(load_ckpt))
 
-    training_steps = TrainingSteps(model=model)
+    training_steps = TrainingSteps(model=model, cel_weight=cel_weight)
 
     optimizer = SGD(
         model.parameters(),
@@ -281,6 +282,8 @@ if __name__ == '__main__':
                         type=float)
     parser.add_argument('--weight_decay', default=1e-5, help='The weight decay.',
                         type=float)
+    parser.add_argument('--cel_weight', default=0.01, help='The weight of cross-entropy loss in the total loss.',
+                        type=float)
 
     # Train args
     parser.add_argument(
@@ -340,6 +343,7 @@ if __name__ == '__main__':
         lr=args.lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay,
+        cel_weight=cel_weight,
     
         # Train
         num_epochs=args.num_epochs,
