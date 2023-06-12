@@ -26,7 +26,7 @@ class TrainingSteps:
 
         loss = torch.sqrt(F.mse_loss(pred_verts, verts))
         log_dict = {
-            'MSE': loss,
+            'L2': loss,
         }
 
         return loss, log_dict
@@ -49,7 +49,7 @@ class TrainingSteps:
 
     def on_after_validation_epoch(self):
         log_dict = {
-            'MSE': torch.tensor(self.val_losses).mean()
+            'ValLoss/L2': torch.tensor(self.val_losses).mean()
         }
         return log_dict
 
