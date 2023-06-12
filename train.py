@@ -343,7 +343,7 @@ if __name__ == '__main__':
         lr=args.lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay,
-        cel_weight=cel_weight,
+        cel_weight=args.cel_weight,
     
         # Train
         num_epochs=args.num_epochs,
