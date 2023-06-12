@@ -8,7 +8,6 @@ import torch
 from torch.utils.data import Dataset
 
 
-EVAL_SUBJECTS = [199, 286, 290, 291, 292, 293, 294, 295, 297, 298]
 TEST_SUBJECTS = [99, 283, 143, 38, 241, 236, 276, 202, 98, 254, 204, 163, 267, 194, 20, 23, 209, 105, 186, 343, 341, 363, 350]
 BAD_SCANS = {
     261: [19],
@@ -87,8 +86,7 @@ def get_nphm_df(data_path):
         subject = int(subj_path.name)
 
         subset = (
-            'test' if (subject in EVAL_SUBJECTS
-                       or subject in TEST_SUBJECTS)
+            'test' if subject in TEST_SUBJECTS
             else 'train'
         )
 
