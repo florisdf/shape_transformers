@@ -36,6 +36,8 @@ class NPHMDataset(Dataset):
         subset: Literal['train', 'test'],
         scan_type: Literal['registration', 'scan', 'flame'] = 'registration',
         drop_bad: bool = True,
+        n_subsample: int = None,
+        subsample_seed: int = None,
     ):
         df = get_nphm_df(data_path / subset)
         df = df[df['subset'] == subset].reset_index(drop=True)
@@ -48,6 +50,18 @@ class NPHMDataset(Dataset):
         self.data_path = data_path
         self.df = df
 
+        self.refresh_vert_idxs(n_subsample, subsample_seed)
+
+    def refresh_vert_idxs(self, n_subsample=None, seed=None):
+        idxs = np.arange(self.mean_verts.shape[0])
+
+        if n_subsample is not None:
+            np.random.seed(seed)
+            np.random.shuffle(idxs)
+            idxs = idxs[:n_subsample]
+
+        self.vert_idxs = torch.tensor(idxs)
+
     def __len__(self):
         return len(self.df)
 
@@ -57,11 +71,11 @@ class NPHMDataset(Dataset):
         subject = row['subject']
 
         v, f = pcu.load_mesh_vf(scan_path)
-        v = torch.tensor(v)
-        f = torch.tensor(f)
+        v = torch.tensor(v)[self.vert_idxs]
+        mean_verts = self.mean_verts[self.vert_idxs]
 
-        v_off = v - self.mean_verts
-        positions = torch.clone(self.mean_verts)
+        v_off = v - mean_verts
+        positions = torch.clone(mean_verts)
 
         return v_off, positions, subject
 

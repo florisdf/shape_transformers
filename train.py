@@ -23,6 +23,8 @@ def run_training(
     data_path='/apollo/datasets/NPHM',
     scan_type='registration',
     drop_bad_scans=True,
+    n_verts_subsample=None,
+    subsample_seed=15,
 
     # Ckpt
     load_ckpt=None,
@@ -59,6 +61,8 @@ def run_training(
         subset='train',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
+        n_subsample=n_verts_subsample,
+        subsample_seed=subsample_seed
     )
     ds_test = NPHMDataset(
         data_path=Path(data_path),
@@ -74,6 +78,7 @@ def run_training(
     )
     dl_train = DataLoader(
         ds_train,
+        shuffle=True,
         batch_size=batch_size,
         num_workers=num_workers,
     )
@@ -223,6 +228,16 @@ if __name__ == '__main__':
         '--keep_bad_scans', action='store_true',
         help='If set, leave bad scans in the dataset.',
     )
+    parser.add_argument(
+        '--n_verts_subsample', default=None,
+        help='Number of vertices to subsample.',
+        type=int,
+    )
+    parser.add_argument(
+        '--subsample_seed', default=15,
+        help='Random seed to use for shuffling the subsample indices during training.',
+        type=int
+    )
 
     # Dataloader args
     parser.add_argument('--batch_size', default=32, help='The training batch size.', type=int)
@@ -274,6 +289,8 @@ if __name__ == '__main__':
         data_path=args.data_path,
         scan_type=args.scan_type,
         drop_bad_scans=not args.keep_bad_scans,
+        n_verts_subsample=args.n_verts_subsample,
+        subsample_seed=args.subsample_seed,
     
         # Ckpt
         load_ckpt=args.load_ckpt,
