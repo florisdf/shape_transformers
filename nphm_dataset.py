@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset
 
 
-TEST_SUBJECTS = [99, 283, 143, 38, 241, 236, 276, 202, 98, 254, 204, 163, 267, 194, 20, 23, 209, 105, 186, 343, 341, 363, 350]
+TEST_LABELS = [99, 283, 143, 38, 241, 236, 276, 202, 98, 254, 204, 163, 267, 194, 20, 23, 209, 105, 186, 343, 341, 363, 350]
 BAD_SCANS = {
     261: [19],
     88: [19],
@@ -67,7 +67,7 @@ class NPHMDataset(Dataset):
     def __getitem__(self, idx):
         row = self.df.iloc[idx]
         scan_path = row[self.scan_type]
-        subject = row['subject']
+        label = row['label']
 
         v, f = pcu.load_mesh_vf(scan_path)
         v = torch.tensor(v)[self.vert_idxs]
@@ -76,17 +76,17 @@ class NPHMDataset(Dataset):
         v_off = v - mean_verts
         positions = torch.clone(mean_verts)
 
-        return v_off, positions, subject
+        return v_off, positions, label
 
 
 def get_nphm_df(data_path):
     rows = []
 
     for subj_path in data_path.glob('[0-9][0-9][0-9]'):
-        subject = int(subj_path.name)
+        label = int(subj_path.name)
 
         subset = (
-            'test' if subject in TEST_SUBJECTS
+            'test' if label in TEST_LABELS
             else 'train'
         )
 
@@ -94,24 +94,24 @@ def get_nphm_df(data_path):
             expression = int(f.name)
 
             try:
-                is_bad = expression in BAD_SCANS[subject]
+                is_bad = expression in BAD_SCANS[label]
             except KeyError:
                 is_bad = False
 
             try:
-                is_neutral_open = NEUTRALS[subject] == expression
+                is_neutral_open = NEUTRALS[label] == expression
             except KeyError:
                 is_neutral_open = False
 
             try:
-                is_neutral_closed = NEUTRALS_CLOSED[subject] == expression
+                is_neutral_closed = NEUTRALS_CLOSED[label] == expression
             except KeyError:
                 is_neutral_closed = False
 
             subj_expr_path = subj_path / f"{expression:03d}"
 
             rows.append({
-                'subject': subject,
+                'label': label,
                 'expression': expression,
                 'is_bad': is_bad,
                 'subset': subset,
