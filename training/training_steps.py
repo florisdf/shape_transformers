@@ -89,7 +89,7 @@ class TrainingSteps:
 
         self.gallery_embs = []
         self.gallery_labels = []
-        self.query_embs = []
+        self.query_scores = []
         self.query_labels = []
 
         return log_dict
