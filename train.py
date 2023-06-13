@@ -155,24 +155,6 @@ def split_gallery_query(ds_val):
     return ds_val_gal, ds_val_quer
 
 
-
-
-def int_list_arg_type(arg):
-    return [int(s) for s in arg.split(',') if len(s.strip()) > 0]
-
-
-def str_list_arg_type(arg):
-    return [s.strip() for s in arg.split(',') if len(s.strip()) > 0]
-
-
-def crop_box_size_type(arg):
-    try:
-        value = int(arg)
-        return (value, value)
-    except ValueError:
-        return arg
-
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -181,7 +163,8 @@ if __name__ == '__main__':
     # Model
     parser.add_argument(
         '--token_size', default=64,
-        help="Size of tokens used as input into the shape transformer."
+        help="Size of tokens used as input into the shape transformer.",
+        type=int
     )
     parser.add_argument(
         '--disentangle_style', action='store_true',
