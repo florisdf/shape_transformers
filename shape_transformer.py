@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 from xca import XCABlock
 
 
@@ -34,24 +35,8 @@ class ShapeTransformerEncoder(nn.Module):
     def __init__(self, token_size=64):
         super().__init__()
 
-        self.pos_mlp = nn.Sequential(
-            nn.Linear(3, token_size//16),
-            nn.ReLU(),
-            nn.Linear(token_size//16, token_size//8),
-            nn.ReLU(),
-            nn.Linear(token_size//8, token_size//4),
-            nn.ReLU(),
-            nn.Linear(token_size//4, token_size//2),
-        )
-        self.offset_mlp = nn.Sequential(
-            nn.Linear(3, token_size//16),
-            nn.ReLU(),
-            nn.Linear(token_size//16, token_size//8),
-            nn.ReLU(),
-            nn.Linear(token_size//8, token_size//4),
-            nn.ReLU(),
-            nn.Linear(token_size//4, token_size//2),
-        )
+        self.pos_mlp = ResidualMLP(3, token_size//2, token_size//2, num_hidden=2)
+        self.offset_mlp = ResidualMLP(3, token_size//2, token_size//2, num_hidden=2)
         self.shape_token = nn.Parameter(torch.randn(token_size),
                                         requires_grad=True)
         self.xca_blocks = nn.ModuleList([
@@ -95,25 +80,8 @@ class ShapeTransformerDecoder(nn.Module):
     def __init__(self, token_size=64, disentangle_style=False):
         super().__init__()
 
-        self.pos_mlp = nn.Sequential(
-            nn.Linear(3, token_size//8),
-            nn.ReLU(),
-            nn.Linear(token_size//8, token_size//4),
-            nn.ReLU(),
-            nn.Linear(token_size//4, token_size//2),
-            nn.ReLU(),
-            nn.Linear(token_size//2, token_size),
-        )
-
-        self.offset_mlp = nn.Sequential(
-            nn.Linear(token_size, token_size//2),
-            nn.ReLU(),
-            nn.Linear(token_size//2, token_size//4),
-            nn.ReLU(),
-            nn.Linear(token_size//4, token_size//8),
-            nn.ReLU(),
-            nn.Linear(token_size//8, 3),
-        )
+        self.pos_mlp = ResidualMLP(3, token_size, token_size, num_hidden=2)
+        self.offset_mlp = ResidualMLP(token_size, token_size, 3, num_hidden=2)
 
         self.style_mlp_shared = nn.Sequential(
             nn.Linear(token_size, token_size),
@@ -124,13 +92,7 @@ class ShapeTransformerDecoder(nn.Module):
         self.disentangle_style = disentangle_style
 
         if self.disentangle_style:
-            self.expression_mlp = nn.Sequential(
-                nn.Linear(token_size//2, token_size//2),
-                nn.ReLU(),
-                nn.Linear(token_size//2, token_size//2),
-                nn.ReLU(),
-                nn.Linear(token_size//2, token_size//2),
-            )
+            self.expression_mlp = ResidualMLP(token_size//2, token_size//2, token_size//2, num_hidden=1)
 
         self.xca_blocks = nn.ModuleList([
             XCABlock(dim=token_size, lpi_kernel_size=1)
@@ -154,7 +116,7 @@ class ShapeTransformerDecoder(nn.Module):
 
         # Pass shape code through 4 layers with shared weights
         for _ in range(4):
-            shape_code = self.style_mlp_shared(shape_code)
+            shape_code = shape_code + self.style_mlp_shared(shape_code)
 
         style_code = self.style_mlp_affine(shape_code)
 
@@ -174,3 +136,23 @@ class ShapeTransformerDecoder(nn.Module):
             return offsets, id_code
         else:
             return offsets
+
+
+class ResidualMLP(nn.Module):
+    def __init__(self, in_features, hidden_features, out_features, num_hidden):
+        super().__init__()
+        self.in_layer = nn.Linear(in_features, hidden_features)
+        self.hidden_layers = nn.ModuleList([
+            nn.Linear(hidden_features, hidden_features)
+            for _ in range(num_hidden)
+        ])
+        self.out_layer = nn.Linear(hidden_features, out_features)
+
+    def forward(self, x):
+        x = self.in_layer(x)
+        x = F.relu(x)
+        for layer in self.hidden_layers:
+            h = layer(x)
+            x = F.relu(h + x)
+        x = self.out_layer(x)
+        return x
