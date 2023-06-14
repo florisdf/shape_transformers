@@ -186,7 +186,7 @@ if __name__ == '__main__':
         'epoch.'
     )
     parser.add_argument(
-        '--best_metric', default='MSE',
+        '--best_metric', default='ValLoss/L2',
         help='If this metric improves, create a checkpoint (when --save_best is set).'
     )
     parser.add_argument(
