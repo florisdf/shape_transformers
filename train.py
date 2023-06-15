@@ -1,9 +1,7 @@
 import argparse
-from collections import OrderedDict
 from pathlib import Path
 
 import torch
-from torch import nn
 from torch.optim import SGD
 from torch.utils.data import DataLoader
 import wandb
@@ -56,42 +54,10 @@ def run_training(
     # Device
     device='cuda',
 ):
-    ds_train = NPHMDataset(
-        data_path=Path(data_path),
-        subset='train',
-        scan_type=scan_type,
-        drop_bad=drop_bad_scans,
-        n_subsample=n_verts_subsample,
-        subsample_seed=subsample_seed
-    )
-    ds_test = NPHMDataset(
-        data_path=Path(data_path),
-        subset='test',
-        scan_type=scan_type,
-        drop_bad=drop_bad_scans,
-    )
-    ds_train, ds_val = kfold_split(
-        ds_train,
-        k=k_fold_num_folds,
-        val_fold=k_fold_val_fold,
-        seed=k_fold_seed,
-    )
-    ds_val.refresh_vert_idxs()
-    dl_train = DataLoader(
-        ds_train,
-        shuffle=True,
-        batch_size=batch_size,
-        num_workers=num_workers,
-    )
-    dl_val = DataLoader(
-        ds_val,
-        batch_size=val_batch_size,
-        num_workers=num_workers,
-    )
-    dl_test = DataLoader(
-        ds_test,
-        batch_size=val_batch_size,
-        num_workers=num_workers,
+    dl_train, dl_val, dl_test = get_data_loaders(
+        data_path, scan_type, drop_bad_scans, n_verts_subsample,
+        subsample_seed, k_fold_num_folds, k_fold_val_fold, k_fold_seed,
+        batch_size, val_batch_size, num_workers
     )
 
     device = torch.device(device)
@@ -130,6 +96,50 @@ def run_training(
     )
     training_loop.run()
 
+
+def get_data_loaders(
+    data_path, scan_type, drop_bad_scans, n_verts_subsample,
+    subsample_seed, k_fold_num_folds, k_fold_val_fold, k_fold_seed,
+    batch_size, val_batch_size, num_workers
+):
+    ds_train = NPHMDataset(
+        data_path=Path(data_path),
+        subset='train',
+        scan_type=scan_type,
+        drop_bad=drop_bad_scans,
+        n_subsample=n_verts_subsample,
+        subsample_seed=subsample_seed
+    )
+    ds_test = NPHMDataset(
+        data_path=Path(data_path),
+        subset='test',
+        scan_type=scan_type,
+        drop_bad=drop_bad_scans,
+    )
+    ds_train, ds_val = kfold_split(
+        ds_train,
+        k=k_fold_num_folds,
+        val_fold=k_fold_val_fold,
+        seed=k_fold_seed,
+    )
+    ds_val.refresh_vert_idxs()
+    dl_train = DataLoader(
+        ds_train,
+        shuffle=True,
+        batch_size=batch_size,
+        num_workers=num_workers,
+    )
+    dl_val = DataLoader(
+        ds_val,
+        batch_size=val_batch_size,
+        num_workers=num_workers,
+    )
+    dl_test = DataLoader(
+        ds_test,
+        batch_size=val_batch_size,
+        num_workers=num_workers,
+    )
+    return dl_train, dl_val, dl_test
 
 
 def int_list_arg_type(arg):
@@ -272,7 +282,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--wandb_project', help='Weights and Biases project.'
     )
-    
+
     # Device arg
     parser.add_argument('--device', default='cuda',
                         help='The device (cuda/cpu) to use.')
@@ -285,14 +295,14 @@ if __name__ == '__main__':
         # Model
         token_size=args.token_size,
         disentangle_style=args.disentangle_style,
-    
+
         # Dataset
         data_path=args.data_path,
         scan_type=args.scan_type,
         drop_bad_scans=not args.keep_bad_scans,
         n_verts_subsample=args.n_verts_subsample,
         subsample_seed=args.subsample_seed,
-    
+
         # Ckpt
         load_ckpt=args.load_ckpt,
         save_unique=args.save_unique,
@@ -301,25 +311,25 @@ if __name__ == '__main__':
         best_metric=args.best_metric,
         is_higher_better=args.higher_is_better,
         ckpts_path=args.ckpts_path,
-    
+
         # K-Fold
         k_fold_seed=args.k_fold_seed,
         k_fold_num_folds=args.k_fold_num_folds,
         k_fold_val_fold=args.k_fold_val_fold,
-    
+
         # Dataloader
         batch_size=args.batch_size,
         val_batch_size=args.val_batch_size,
         num_workers=args.num_workers,
-    
+
         # Optimizer
         lr=args.lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay,
-    
+
         # Train
         num_epochs=args.num_epochs,
-    
+
         # Device
         device=args.device,
     )
