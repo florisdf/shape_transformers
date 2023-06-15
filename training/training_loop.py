@@ -1,9 +1,7 @@
-import functools
 from pathlib import Path
 import sys
 
 import torch
-from torchvision.ops.poolers import LevelMapper
 from tqdm import tqdm
 import wandb
 
@@ -92,14 +90,15 @@ class TrainingLoop:
 
     def validation_epoch(self):
         # Validation loop
-        for self.val_batch_idx, batch in tqdm(
-            enumerate(self.dl_val, start=self.val_batch_idx + 1),
+        for batch_idx, batch in tqdm(
+            enumerate(self.dl_val),
             leave=False,
             total=len(self.dl_val),
         ):
+            self.val_batch_idx += 1
             batch = tuple(x.to(self.device) for x in batch)
             with torch.no_grad():
-                self.training_steps.on_validation_step(batch)
+                self.training_steps.on_validation_step(batch, batch_idx)
 
     def update_minmax_metrics(self, val_log_dict):
         for k, v in val_log_dict.items():

@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 import torch
 import torch.nn.functional as F
 import wandb
@@ -13,6 +11,7 @@ class TrainingSteps:
         self.model = model
 
         self.val_losses = []
+        self.point_clouds = []
 
     def on_before_training_epoch(self):
         pass
@@ -37,12 +36,21 @@ class TrainingSteps:
     def on_before_validation_epoch(self):
         pass
 
-    def on_validation_step(self, batch):
+    def on_validation_step(self, batch, batch_idx):
         verts, positions, labels = batch
         if self.model.disentangle_style:
             pred_verts, pred_id_embs = self.model(positions, verts)
         else:
             pred_verts = self.model(positions, verts)
+
+        if batch_idx == 0:
+            for v, p, l, pred in zip(verts, positions, labels, pred_verts):
+                v = wandb.Object3D((v + p).cpu().numpy())
+                pred = wandb.Object3D((pred + p).cpu().numpy())
+                self.point_clouds.extend([
+                    {f"true_points/{int(l.cpu())}": v},
+                    {f"pred_points/{int(l.cpu())}": pred},
+                ])
 
         loss = torch.sqrt(F.mse_loss(pred_verts, verts))
         self.val_losses.append(loss)
@@ -51,6 +59,11 @@ class TrainingSteps:
         log_dict = {
             'ValLoss/L2': torch.tensor(self.val_losses).mean()
         }
+        for d in self.point_clouds:
+            log_dict.update(d)
+
+        self.point_clouds = []
+
         return log_dict
 
 
