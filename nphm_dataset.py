@@ -44,7 +44,7 @@ class NPHMDataset(Dataset):
         if drop_bad:
             df = df[~df['is_bad']].reset_index(drop=True)
 
-        self.mean_verts = torch.tensor(np.load('nphm_mean_vertices.npy'))
+        self.mean_verts = torch.tensor(np.load(Path(__file__).resolve().parent / 'nphm_mean_vertices.npy'))
         self.scan_type = scan_type
         self.data_path = data_path
         self.df = df
