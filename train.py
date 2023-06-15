@@ -50,6 +50,7 @@ def run_training(
 
     # Train
     num_epochs=30,
+    max_num_3d_logs=0,
 
     # Device
     device='cuda',
@@ -71,6 +72,7 @@ def run_training(
 
     training_steps = TrainingSteps(
         model=model,
+        max_num_3d_logs=max_num_3d_logs,
     )
 
     optimizer = SGD(
@@ -274,6 +276,11 @@ if __name__ == '__main__':
         help='The number of epochs to train.',
         type=int
     )
+    parser.add_argument(
+        '--max_num_3d_logs', default=0,
+        help='The maximum number of 3d shapes to log per validation epoch',
+        type=int
+    )
 
     # Log args
     parser.add_argument(
@@ -329,6 +336,7 @@ if __name__ == '__main__':
 
         # Train
         num_epochs=args.num_epochs,
+        max_num_3d_logs=args.max_num_3d_logs,
 
         # Device
         device=args.device,
