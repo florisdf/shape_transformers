@@ -7,11 +7,13 @@ class TrainingSteps:
     def __init__(
         self,
         model,
+        max_num_3d_logs=5
     ):
         self.model = model
 
         self.val_losses = []
         self.point_clouds = []
+        self.max_num_3d_logs = max_num_3d_logs
 
     def on_before_training_epoch(self):
         pass
@@ -44,12 +46,15 @@ class TrainingSteps:
             pred_verts = self.model(positions, verts)
 
         if batch_idx == 0:
-            for v, p, l, pred in zip(verts, positions, labels, pred_verts):
+            for v, p, l, pred in zip(
+                verts, positions, labels, pred_verts,
+                range(self.max_num_3d_logs)
+            ):
                 v = wandb.Object3D((v + p).cpu().numpy())
                 pred = wandb.Object3D((pred + p).cpu().numpy())
                 self.point_clouds.extend([
-                    {f"true_points/{int(l.cpu())}": v},
-                    {f"pred_points/{int(l.cpu())}": pred},
+                    {f"{int(l.cpu())}_true_points": v},
+                    {f"{int(l.cpu())}_pred_points": pred},
                 ])
 
         loss = torch.sqrt(F.mse_loss(pred_verts, verts))
@@ -57,7 +62,7 @@ class TrainingSteps:
 
     def on_after_validation_epoch(self):
         log_dict = {
-            'ValLoss/L2': torch.tensor(self.val_losses).mean()
+            'L2': torch.tensor(self.val_losses).mean()
         }
         for d in self.point_clouds:
             log_dict.update(d)

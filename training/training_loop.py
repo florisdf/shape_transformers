@@ -55,18 +55,18 @@ class TrainingLoop:
             self.training_steps.on_before_training_epoch()
             self.training_epoch()
             log_dict = self.training_steps.on_after_training_epoch()
-            log(log_dict, epoch_idx=self.epoch_idx)
+            log(log_dict, epoch_idx=self.epoch_idx, section='Train')
 
             # Validation epoch
             self.model.eval()
             self.training_steps.on_before_validation_epoch()
             self.validation_epoch()
             log_dict = self.training_steps.on_after_validation_epoch()
-            log(log_dict, epoch_idx=self.epoch_idx)
+            log(log_dict, epoch_idx=self.epoch_idx, section='Val')
 
             # Update and log minmax_metrics
             self.update_minmax_metrics(log_dict)
-            log(self.minmax_metrics, epoch_idx=self.epoch_idx)
+            log(self.minmax_metrics, epoch_idx=self.epoch_idx, section='Val')
 
             # Create checkpoints
             self.create_checkpoints(log_dict)
@@ -102,7 +102,7 @@ class TrainingLoop:
 
     def update_minmax_metrics(self, val_log_dict):
         for k, v in val_log_dict.items():
-            if isinstance(v, wandb.Histogram):
+            if isinstance(v, wandb.Histogram) or isinstance(v, wandb.Object3D):
                 continue
 
             max_name = f'Max{k}'
