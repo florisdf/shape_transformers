@@ -46,7 +46,7 @@ class TrainingSteps:
             pred_verts = self.model(positions, verts)
 
         if batch_idx == 0:
-            for v, p, l, pred in zip(
+            for v, p, l, pred, _ in zip(
                 verts, positions, labels, pred_verts,
                 range(self.max_num_3d_logs)
             ):
