@@ -1,6 +1,7 @@
 import torch
 from torch import nn
-from xca import XCABlock
+
+from .xca import XCABlock
 
 
 class ShapeTransformer(nn.Module):
@@ -20,9 +21,12 @@ class ShapeTransformer(nn.Module):
     def forward(self, positions, offsets, decoder_positions=None):
         shape_code = self.encoder(positions, offsets)
 
-        decoder_positions = positions if decoder_positions is None else decoder_positions
+        decoder_positions = (
+            positions if decoder_positions is None
+            else decoder_positions
+        )
         return self.decoder(decoder_positions, shape_code)
-        
+
 
 class ShapeTransformerEncoder(nn.Module):
     """

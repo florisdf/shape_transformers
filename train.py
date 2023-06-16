@@ -6,10 +6,10 @@ from torch.optim import SGD
 from torch.utils.data import DataLoader
 import wandb
 
-from training import TrainingSteps, TrainingLoop
-from kfold import kfold_split
-from nphm_dataset import NPHMDataset
-from shape_transformer import ShapeTransformer
+from shape_transformers.training import TrainingSteps, TrainingLoop
+from shape_transformers.utils.kfold import kfold_split
+from shape_transformers.dataset.nphm_dataset import NPHMDataset
+from shape_transformers.model.shape_transformer import ShapeTransformer
 
 
 def run_training(
