@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 
+import numpy as np
 import torch
 from torch.optim import SGD
 from torch.utils.data import DataLoader
@@ -10,6 +11,9 @@ from shape_transformers.training import TrainingSteps, TrainingLoop
 from shape_transformers.utils.kfold import kfold_split
 from shape_transformers.dataset.nphm_dataset import NPHMDataset
 from shape_transformers.model.shape_transformer import ShapeTransformer
+from shape_transformers.dataset.transforms import (
+    ShapePositionNormalize, SubsampleShape, Compose
+)
 
 
 def run_training(
@@ -104,27 +108,37 @@ def get_data_loaders(
     subsample_seed, k_fold_num_folds, k_fold_val_fold, k_fold_seed,
     batch_size, val_batch_size, num_workers
 ):
+    v_mean = np.load('shape_transformers/dataset/nphm_mean_vertices.npy')
+    v_std = np.load('shape_transformers/dataset/nphm_std_vertices.npy')
+    norm = ShapePositionNormalize(v_mean, v_std)
+    subsamp = SubsampleShape(n_verts_subsample, subsample_seed)
+
+    train_tfm = Compose(norm, subsamp)
+    test_tfm = norm
+
     ds_train = NPHMDataset(
         data_path=Path(data_path),
         subset='train',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
-        n_subsample=n_verts_subsample,
-        subsample_seed=subsample_seed
+        transform=train_tfm,
     )
     ds_test = NPHMDataset(
         data_path=Path(data_path),
         subset='test',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
+        transform=test_tfm
     )
+
     ds_train, ds_val = kfold_split(
         ds_train,
         k=k_fold_num_folds,
         val_fold=k_fold_val_fold,
         seed=k_fold_seed,
     )
-    ds_val.refresh_vert_idxs()
+    ds_val.transform = test_tfm
+
     dl_train = DataLoader(
         ds_train,
         shuffle=True,
@@ -141,6 +155,7 @@ def get_data_loaders(
         batch_size=val_batch_size,
         num_workers=num_workers,
     )
+
     return dl_train, dl_val, dl_test
 
 
