@@ -93,7 +93,10 @@ class ShapeTransformerDecoder(nn.Module):
     Comprises a sequence of 4 XCiT transformer blocks with standard residual
     MLPs, but *with modulated input tokens*.
     """
-    def __init__(self, token_size=64, disentangle_style=False):
+    def __init__(
+        self, token_size=64, disentangle_style=False,
+        num_xca_blocks=4
+    ):
         super().__init__()
 
         self.pos_mlp = nn.Sequential(
@@ -116,62 +119,66 @@ class ShapeTransformerDecoder(nn.Module):
             nn.Linear(token_size//8, 3),
         )
 
-        self.style_mlp_shared = nn.Sequential(
-            nn.Linear(token_size, token_size),
-            nn.ReLU()
+        num_style_mlp_feats = (
+            2 * token_size if disentangle_style
+            else token_size
         )
-        self.style_mlp_affine = nn.Linear(token_size,  token_size)
+        self.style_mlp = nn.Sequential(
+            nn.Linear(num_style_mlp_feats, num_style_mlp_feats),
+            nn.ReLU(),
+            nn.Linear(num_style_mlp_feats, num_style_mlp_feats),
+            nn.ReLU(),
+            nn.Linear(num_style_mlp_feats, num_style_mlp_feats),
+            nn.ReLU(),
+            nn.Linear(num_style_mlp_feats, num_style_mlp_feats),
+            nn.ReLU(),
+        )
+        self.style_mlp_heads = nn.ModuleList([
+            nn.Linear(num_style_mlp_feats,  token_size)
+            for i in range(num_xca_blocks)
+        ])
 
         self.disentangle_style = disentangle_style
 
         if self.disentangle_style:
             self.expression_mlp = nn.Sequential(
-                nn.Linear(token_size//2, token_size//2),
+                nn.Linear(token_size, token_size),
                 nn.ReLU(),
-                nn.Linear(token_size//2, token_size//2),
+                nn.Linear(token_size, token_size),
                 nn.ReLU(),
-                nn.Linear(token_size//2, token_size//2),
+                nn.Linear(token_size, token_size),
             )
 
         self.xca_blocks = nn.ModuleList([
             XCABlock(dim=token_size, lpi_kernel_size=1)
-            for _ in range(4)
+            for _ in range(num_xca_blocks)
         ])
 
-    def forward(self, positions, shape_code):
+    def forward(self, positions, shape_code, expr_code=None):
         # Pass positions through position MLP
         latent_positions = self.pos_mlp(positions)
 
         if self.disentangle_style:
-            #  Split shape code into expression and identity part
-            # B x 64 -> (B x 32, B x 32)
-            expr_code, id_code = torch.split(
-                shape_code,
-                shape_code.shape[-1] // 2,
-                dim=-1
-            )
+            assert expr_code is not None
             expr_code = self.expression_mlp(expr_code)
-            shape_code = torch.cat([expr_code, id_code], dim=-1)
+            shape_code = torch.cat([expr_code, shape_code], dim=-1)
 
-        # Pass shape code through 4 layers with shared weights
-        for _ in range(4):
-            shape_code = self.style_mlp_shared(shape_code)
-
-        style_code = self.style_mlp_affine(shape_code)
+        # Pass shape code through 4 layer MLP
+        style_code = self.style_mlp(shape_code)
+        modulations = [
+            style_head(style_code)
+            for style_head in self.style_mlp_heads
+        ]
 
         # Pass tokens through transformer, each time modulating with style code
         tokens = latent_positions
         H = tokens.shape[-2]
         W = 1
-        for xca_block in self.xca_blocks:
-            tokens = tokens * style_code[..., None, :]
+        for xca_block, modulation in zip(self.xca_blocks, modulations):
+            tokens = modulation * style_code[..., None, :]
             tokens = xca_block(tokens, H, W)
 
         # Pass latent output offsets through OutputOffsetMLP
         offsets = self.offset_mlp(tokens)
 
-        if self.disentangle_style:
-            # Return identity code for supervision
-            offsets, id_code
-        else:
-            return offsets
+        return offsets
