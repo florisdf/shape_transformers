@@ -3,6 +3,7 @@ from typing import Literal
 
 import pandas as pd
 import point_cloud_utils as pcu
+import torch
 from torch.utils.data import Dataset
 
 
@@ -129,6 +130,8 @@ class NPHMDataset(Dataset):
         label = row['label']
 
         v, f = pcu.load_mesh_vf(scan_path)
+        v = torch.tensor(v)
+        f = torch.tensor(f)
 
         if self.transform is not None:
             return self.transform(v, f, label)
