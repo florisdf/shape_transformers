@@ -21,12 +21,18 @@ class ShapePositionNormalize:
             / (self.mean_shape_std + self.eps)
         )
 
-    def __call__(self, vertices, faces, label):
+    def inverse(self, normalized_vertices):
+        return (
+            normalized_vertices * (self.std_shape + self.eps)
+            + self.mean_shape
+        )
+
+    def __call__(self, vertices, *other):
         v_norm = (
             (vertices - self.mean_shape)
             / (self.std_shape + self.eps)
         )
-        return v_norm, torch.clone(self.normed_positions), label
+        return v_norm, torch.clone(self.normed_positions), *other
 
 
 class SubsampleShape:
@@ -41,6 +47,7 @@ class SubsampleShape:
         self.vert_idxs = None
 
     def refresh_vert_idxs(self):
+        assert self.tot_samples is not None
         idxs = np.arange(self.tot_samples)
 
         if self.n_subsample is not None:
@@ -50,7 +57,7 @@ class SubsampleShape:
 
         self.vert_idxs = torch.tensor(idxs)
 
-    def __call__(self, vertices, positions, label):
+    def __call__(self, vertices, positions, *other):
         if self.tot_samples is None:
             assert len(vertices) == len(positions)
             self.tot_samples = len(vertices)
@@ -60,7 +67,7 @@ class SubsampleShape:
         return (
             vertices[self.vert_idxs],
             positions[self.vert_idxs],
-            label
+            *other
         )
 
 
