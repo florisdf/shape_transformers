@@ -111,10 +111,11 @@ def get_data_loaders(
     v_mean = np.load('shape_transformers/dataset/nphm_mean_vertices.npy')
     v_std = np.load('shape_transformers/dataset/nphm_std_vertices.npy')
     norm = ShapePositionNormalize(v_mean, v_std)
-    subsamp = SubsampleShape(n_verts_subsample, subsample_seed)
+    train_subsamp = SubsampleShape(n_verts_subsample, subsample_seed)
+    test_subsamp = SubsampleShape(None)
 
-    train_tfm = Compose(norm, subsamp)
-    test_tfm = norm
+    train_tfm = Compose(norm, train_subsamp)
+    test_tfm = Compose(norm, test_subsamp)
 
     ds_train = NPHMDataset(
         data_path=Path(data_path),

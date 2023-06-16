@@ -57,7 +57,7 @@ class SubsampleShape:
 
         self.vert_idxs = torch.tensor(idxs)
 
-    def __call__(self, vertices, positions, *other):
+    def __call__(self, vertices, positions, faces, label):
         if self.tot_samples is None:
             assert len(vertices) == len(positions)
             self.tot_samples = len(vertices)
@@ -67,7 +67,7 @@ class SubsampleShape:
         return (
             vertices[self.vert_idxs],
             positions[self.vert_idxs],
-            *other
+            label
         )
 
 
