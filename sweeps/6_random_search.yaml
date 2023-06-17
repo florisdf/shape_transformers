@@ -27,8 +27,7 @@ parameters:
   k_fold_seed:
     value: 15
   k_fold_val_fold:
-    distribution: categorical
-    values: 0
+    value: 0
   n_verts_subsample:
     value: 5000
   momentum:
