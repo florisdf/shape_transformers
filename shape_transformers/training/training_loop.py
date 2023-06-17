@@ -85,10 +85,14 @@ class TrainingLoop:
             self.optimizer.step()
             self.lr_scheduler.step()
             self.model.zero_grad()
-            log_dict['LR'] = self.lr_scheduler.get_last_lr()[0]
             log(log_dict, epoch_idx=self.epoch_idx,
                 batch_idx=self.train_batch_idx,
                 section='TrainLoss')
+            log(
+                dict(LR=self.lr_scheduler.get_last_lr()[0]),
+                epoch_idx=self.epoch_idx,
+                batch_idx=self.train_batch_idx
+            )
         if torch.isnan(loss):
             sys.exit('Loss is NaN. Exiting...')
 
