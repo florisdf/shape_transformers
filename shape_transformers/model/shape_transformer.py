@@ -175,7 +175,7 @@ class ShapeTransformerDecoder(nn.Module):
         H = tokens.shape[-2]
         W = 1
         for xca_block, modulation in zip(self.xca_blocks, modulations):
-            tokens = modulation * style_code[..., None, :]
+            tokens = tokens * modulation[..., None, :]
             tokens = xca_block(tokens, H, W)
 
         # Pass latent output offsets through OutputOffsetMLP
