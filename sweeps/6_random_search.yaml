@@ -20,7 +20,8 @@ parameters:
       - 0.02
       - 0.05
       - 0.1
-  lr_warmup_steps: 500
+  lr_warmup_steps:
+    value: 500
   k_fold_num_folds:
     value: 5
   k_fold_seed:
