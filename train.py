@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 import torch
 from torch.optim import SGD
+from torch.optim.lr_scheduler import LinearLR
 from torch.utils.data import DataLoader
 import wandb
 
@@ -51,6 +52,7 @@ def run_training(
     lr=0.01,
     momentum=0.95,
     weight_decay=1e-5,
+    lr_warmup_steps=1,
 
     # Train
     num_epochs=30,
@@ -85,10 +87,17 @@ def run_training(
         momentum=momentum,
         weight_decay=weight_decay
     )
+    lr_scheduler = LinearLR(
+        optimizer,
+        start_factor=1/lr_warmup_steps,
+        end_factor=1.0,
+        total_iters=lr_warmup_steps
+    )
 
     training_loop = TrainingLoop(
         training_steps=training_steps,
         optimizer=optimizer,
+        lr_scheduler=lr_scheduler,
         device=device,
         num_epochs=num_epochs,
         dl_train=dl_train,
@@ -285,6 +294,9 @@ if __name__ == '__main__':
                         type=float)
     parser.add_argument('--weight_decay', default=1e-5, help='The weight decay.',
                         type=float)
+    parser.add_argument('--lr_warmup_steps', default=1, help='The number of '
+                        'learning rate warmup steps.',
+                        type=int)
 
     # Train args
     parser.add_argument(
@@ -349,6 +361,7 @@ if __name__ == '__main__':
         lr=args.lr,
         momentum=args.momentum,
         weight_decay=args.weight_decay,
+        lr_warmup_steps=args.lr_warmup_steps,
 
         # Train
         num_epochs=args.num_epochs,

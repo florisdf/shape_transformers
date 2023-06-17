@@ -13,6 +13,7 @@ class TrainingLoop:
         self,
         training_steps: TrainingSteps,
         optimizer,
+        lr_scheduler,
         device,
         num_epochs,
         dl_train,
@@ -35,6 +36,7 @@ class TrainingLoop:
 
         self.device = device
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
         self.epoch_idx = 0
         self.train_batch_idx = -1
         self.val_batch_idx = -1
@@ -81,6 +83,7 @@ class TrainingLoop:
             )
             loss.backward()
             self.optimizer.step()
+            self.lr_scheduler.step()
             self.model.zero_grad()
             log(log_dict, epoch_idx=self.epoch_idx,
                 batch_idx=self.train_batch_idx,
