@@ -175,9 +175,9 @@ def get_nphm_df(data_path):
                 'expression': expression,
                 'is_bad': is_bad,
                 'subset': subset,
-                'scan': subj_expr_path / 'scan.ply',
-                'flame': subj_expr_path / 'flame.ply',
-                'registration': subj_expr_path / 'registration.ply',
+                'scan': str(subj_expr_path / 'scan.ply'),
+                'flame': str(subj_expr_path / 'flame.ply'),
+                'registration': str(subj_expr_path / 'registration.ply'),
                 'is_neutral_open': is_neutral_open,
                 'is_neutral_closed': is_neutral_closed,
             })
