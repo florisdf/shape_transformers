@@ -232,7 +232,7 @@ if __name__ == '__main__':
         'epoch.'
     )
     parser.add_argument(
-        '--best_metric', default='Val/L2',
+        '--best_metric', default='L2',
         help='If this metric improves, create a checkpoint '
         '(when --save_best is set).'
     )
