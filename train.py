@@ -53,6 +53,7 @@ def run_training(
     momentum=0.95,
     weight_decay=1e-5,
     lr_warmup_steps=1,
+    num_accum_steps=1,
 
     # Train
     num_epochs=30,
@@ -97,6 +98,7 @@ def run_training(
     training_loop = TrainingLoop(
         training_steps=training_steps,
         optimizer=optimizer,
+        num_accum_steps=num_accum_steps,
         lr_scheduler=lr_scheduler,
         device=device,
         num_epochs=num_epochs,
@@ -297,6 +299,10 @@ if __name__ == '__main__':
     parser.add_argument('--lr_warmup_steps', default=1, help='The number of '
                         'learning rate warmup steps.',
                         type=int)
+    parser.add_argument('--num_accum_steps', default=1, help='The number of '
+                        'gradient accumulation steps.',
+                        type=int)
+
 
     # Train args
     parser.add_argument(
@@ -362,6 +368,7 @@ if __name__ == '__main__':
         momentum=args.momentum,
         weight_decay=args.weight_decay,
         lr_warmup_steps=args.lr_warmup_steps,
+        num_accum_steps=args.num_accum_steps,
 
         # Train
         num_epochs=args.num_epochs,

@@ -13,6 +13,7 @@ class TrainingLoop:
         self,
         training_steps: TrainingSteps,
         optimizer,
+        num_accum_steps,
         lr_scheduler,
         device,
         num_epochs,
@@ -36,6 +37,7 @@ class TrainingLoop:
 
         self.device = device
         self.optimizer = optimizer
+        self.num_accum_steps = num_accum_steps
         self.lr_scheduler = lr_scheduler
         self.epoch_idx = 0
         self.train_batch_idx = -1
@@ -81,18 +83,23 @@ class TrainingLoop:
             loss, log_dict = self.training_steps.on_training_step(
                 batch,
             )
+            loss = loss / self.num_accum_steps
             loss.backward()
-            self.optimizer.step()
-            self.lr_scheduler.step()
-            self.model.zero_grad()
-            log(log_dict, epoch_idx=self.epoch_idx,
-                batch_idx=self.train_batch_idx,
-                section='TrainLoss')
-            log(
-                dict(LR=self.lr_scheduler.get_last_lr()[0]),
-                epoch_idx=self.epoch_idx,
-                batch_idx=self.train_batch_idx
-            )
+            if (
+                ((self.train_batch_idx + 1) % self.num_accum_steps == 0)
+                or ((self.train_batch_idx + 1) % len(self.dl_train) == 0)
+            ):
+                self.optimizer.step()
+                self.lr_scheduler.step()
+                self.model.zero_grad()
+                log(log_dict, epoch_idx=self.epoch_idx,
+                    batch_idx=self.train_batch_idx,
+                    section='TrainLoss')
+                log(
+                    dict(LR=self.lr_scheduler.get_last_lr()[0]),
+                    epoch_idx=self.epoch_idx,
+                    batch_idx=self.train_batch_idx
+                )
         if torch.isnan(loss):
             sys.exit('Loss is NaN. Exiting...')
 
