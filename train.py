@@ -232,8 +232,9 @@ if __name__ == '__main__':
         'epoch.'
     )
     parser.add_argument(
-        '--best_metric', default='ValLoss/L2',
-        help='If this metric improves, create a checkpoint (when --save_best is set).'
+        '--best_metric', default='Val/L2',
+        help='If this metric improves, create a checkpoint '
+        '(when --save_best is set).'
     )
     parser.add_argument(
         '--higher_is_better', action='store_true',
