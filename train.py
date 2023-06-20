@@ -104,6 +104,7 @@ def run_training(
         num_epochs=num_epochs,
         dl_train=dl_train,
         dl_val=dl_val,
+        dl_test=dl_test,
         save_unique=save_unique,
         save_last=save_last,
         save_best=save_best,
@@ -143,23 +144,21 @@ def get_data_loaders(
         transform=test_tfm
     )
 
-    ds_train, ds_val = kfold_split(
-        ds_train,
-        k=k_fold_num_folds,
-        val_fold=k_fold_val_fold,
-        seed=k_fold_seed,
-    )
-    ds_val.transform = test_tfm
+    if k_fold_val_fold is not None:
+        ds_train, ds_val = kfold_split(
+            ds_train,
+            k=k_fold_num_folds,
+            val_fold=k_fold_val_fold,
+            seed=k_fold_seed,
+        )
+        ds_val.transform = test_tfm
+    else:
+        ds_val = None
 
     dl_train = DataLoader(
         ds_train,
         shuffle=True,
         batch_size=batch_size,
-        num_workers=num_workers,
-    )
-    dl_val = DataLoader(
-        ds_val,
-        batch_size=val_batch_size,
         num_workers=num_workers,
     )
     dl_test = DataLoader(
@@ -168,7 +167,15 @@ def get_data_loaders(
         num_workers=num_workers,
     )
 
-    return dl_train, dl_val, dl_test
+    if ds_val is not None:
+        dl_val = DataLoader(
+            ds_val,
+            batch_size=val_batch_size,
+            num_workers=num_workers,
+        )
+        return dl_train, dl_val, dl_test
+    else:
+        return dl_train, None, dl_test
 
 
 def int_list_arg_type(arg):
@@ -251,8 +258,8 @@ if __name__ == '__main__':
     parser.add_argument(
         '--k_fold_val_fold', default=0,
         help='The index of the validation fold. '
-        'Should be a value between 0 and k - 1.',
-        type=int
+        'If None, all folds are used for training.',
+        type=lambda x: None if x == "None" else int(x)
     )
 
     # Dataset

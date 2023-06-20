@@ -19,6 +19,7 @@ class TrainingLoop:
         num_epochs,
         dl_train,
         dl_val,
+        dl_test,
         save_unique,
         save_last,
         save_best,
@@ -31,6 +32,7 @@ class TrainingLoop:
         self.num_epochs = num_epochs
         self.dl_train = dl_train
         self.dl_val = dl_val
+        self.dl_test = dl_test
 
         self.minmax_metrics = {}
         self.ckpt_dir = Path(ckpts_path)
@@ -42,6 +44,7 @@ class TrainingLoop:
         self.epoch_idx = 0
         self.train_batch_idx = -1
         self.val_batch_idx = -1
+        self.test_batch_idx = -1
 
         self.save_unique = save_unique
         self.save_last = save_last
@@ -63,10 +66,18 @@ class TrainingLoop:
 
             # Validation epoch
             self.model.eval()
-            self.training_steps.on_before_validation_epoch()
-            self.validation_epoch()
-            log_dict = self.training_steps.on_after_validation_epoch()
-            log(log_dict, epoch_idx=self.epoch_idx, section='Val')
+            if self.dl_val is not None:
+                self.training_steps.on_before_validation_epoch()
+                self.validation_epoch()
+                log_dict = self.training_steps.on_after_validation_epoch()
+                log(log_dict, epoch_idx=self.epoch_idx, section='Val')
+
+            # Test epoch
+            if self.dl_test is not None and self.dl_val is None:
+                self.training_steps.on_before_test_epoch()
+                self.test_epoch()
+                log_dict = self.training_steps.on_after_test_epoch()
+                log(log_dict, epoch_idx=self.epoch_idx, section='Test')
 
             # Update and log minmax_metrics
             self.update_minmax_metrics(log_dict)
@@ -114,6 +125,18 @@ class TrainingLoop:
             batch = tuple(x.to(self.device) for x in batch)
             with torch.no_grad():
                 self.training_steps.on_validation_step(batch, batch_idx)
+
+    def test_epoch(self):
+        # Test loop
+        for batch_idx, batch in tqdm(
+            enumerate(self.dl_test),
+            leave=False,
+            total=len(self.dl_test),
+        ):
+            self.test_batch_idx += 1
+            batch = tuple(x.to(self.device) for x in batch)
+            with torch.no_grad():
+                self.training_steps.on_test_step(batch, batch_idx)
 
     def update_minmax_metrics(self, val_log_dict):
         for k, v in val_log_dict.items():

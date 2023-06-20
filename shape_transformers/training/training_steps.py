@@ -12,7 +12,9 @@ class TrainingSteps:
         self.model = model
 
         self.val_losses = []
-        self.point_clouds = []
+        self.test_losses = []
+        self.val_point_clouds = []
+        self.test_point_clouds = []
         self.max_num_3d_logs = max_num_3d_logs
 
     def on_before_training_epoch(self):
@@ -38,7 +40,10 @@ class TrainingSteps:
     def on_before_validation_epoch(self):
         pass
 
-    def on_validation_step(self, batch, batch_idx):
+    def on_before_test_epoch(self):
+        pass
+
+    def on_evaluation_step(self, batch, batch_idx, point_clouds, losses):
         verts, positions, labels = batch
         if self.model.disentangle_style:
             pred_verts, pred_id_embs = self.model(positions, verts)
@@ -52,24 +57,37 @@ class TrainingSteps:
             ):
                 v = wandb.Object3D((v + p).cpu().numpy())
                 pred = wandb.Object3D((pred + p).cpu().numpy())
-                self.point_clouds.extend([
+                point_clouds.extend([
                     {f"{int(l.cpu())}_true_points": v},
                     {f"{int(l.cpu())}_pred_points": pred},
                 ])
 
         loss = torch.sqrt(F.mse_loss(pred_verts, verts))
-        self.val_losses.append(loss)
+        losses.append(loss)
 
-    def on_after_validation_epoch(self):
+    def on_validation_step(self, batch, batch_idx):
+        return self.on_evaluation_step(batch, batch_idx, self.val_point_clouds, self.val_losses)
+
+    def on_test_step(self, batch, batch_idx):
+        return self.on_evaluation_step(batch, batch_idx, self.test_point_clouds, self.test_losses)
+
+    def on_after_evaluation_epoch(self, point_clouds, losses):
         log_dict = {
-            'L2': torch.tensor(self.val_losses).mean()
+            'L2': torch.tensor(losses).mean()
         }
-        for d in self.point_clouds:
+        for d in point_clouds:
             log_dict.update(d)
 
-        self.point_clouds = []
+        point_clouds.clear()
+        losses.clear()
 
         return log_dict
+
+    def on_after_validation_epoch(self):
+        return self.on_after_evaluation_epoch(self.val_point_clouds, self.val_losses)
+
+    def on_after_test_epoch(self):
+        return self.on_after_evaluation_epoch(self.test_point_clouds, self.test_losses)
 
 
 def compute_and_get_log_dict(metric, suffix=''):
