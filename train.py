@@ -120,8 +120,9 @@ def get_data_loaders(
     subsample_seed, k_fold_num_folds, k_fold_val_fold, k_fold_seed,
     batch_size, val_batch_size, num_workers
 ):
-    v_mean = np.load('shape_transformers/dataset/nphm_mean_vertices.npy')
-    v_std = np.load('shape_transformers/dataset/nphm_std_vertices.npy')
+    data_path = Path(data_path)
+    v_mean = np.load(data_path / 'nphm_mean_vertices.npy')
+    v_std = np.load(data_path / 'nphm_std_vertices.npy')
     norm = ShapePositionNormalize(v_mean, v_std)
     train_subsamp = SubsampleShape(n_verts_subsample, subsample_seed)
     test_subsamp = SubsampleShape(None)
@@ -130,14 +131,14 @@ def get_data_loaders(
     test_tfm = Compose(norm, test_subsamp)
 
     ds_train = NPHMDataset(
-        data_path=Path(data_path),
+        data_path=data_path,
         subset='train',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
         transform=train_tfm,
     )
     ds_test = NPHMDataset(
-        data_path=Path(data_path),
+        data_path=data_path,
         subset='test',
         scan_type=scan_type,
         drop_bad=drop_bad_scans,
