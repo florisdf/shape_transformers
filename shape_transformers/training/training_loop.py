@@ -167,10 +167,10 @@ class TrainingLoop:
         if (self.save_best and val_log_dict is not None):
             if (
                 (self.is_higher_better
-                    and val_log_dict[self.best_metric] > self.minmax_metrics[f'Max{self.best_metric}'])
+                    and val_log_dict[self.best_metric] >= self.minmax_metrics[f'Max{self.best_metric}'])
                 or
                 (not self.is_higher_better
-                    and val_log_dict[self.best_metric] < self.minmax_metrics[f'Min{self.best_metric}'])
+                    and val_log_dict[self.best_metric] <= self.minmax_metrics[f'Min{self.best_metric}'])
             ):
                 torch.save(
                     self.model.state_dict(),
