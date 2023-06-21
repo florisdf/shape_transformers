@@ -25,7 +25,7 @@ def get_sweep_results(
 
     for run in tqdm(runs, leave=False):
         df_history = run.history(keys=[
-            "ValLoss/L2",
+            "Val/L2",
             "epoch",
         ])
         df_history['val_fold'] = run.config['k_fold_val_fold']
