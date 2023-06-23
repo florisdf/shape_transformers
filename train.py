@@ -208,7 +208,8 @@ if __name__ == '__main__':
     # Model
     parser.add_argument(
         '--token_size', default=64,
-        help="Size of tokens used as input into the shape transformer."
+        help="Size of tokens used as input into the shape transformer.",
+        type=int
     )
     parser.add_argument(
         '--disentangle_style', action='store_true',
