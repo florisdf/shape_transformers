@@ -196,6 +196,10 @@ def crop_box_size_type(arg):
         return arg
 
 
+def int_or_none(arg):
+    return None if arg == "None" else int(arg)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
@@ -262,7 +266,7 @@ if __name__ == '__main__':
         '--k_fold_val_fold', default=0,
         help='The index of the validation fold. '
         'If None, all folds are used for training.',
-        type=lambda x: None if x == "None" else int(x)
+        type=int_or_none
     )
 
     # Dataset
@@ -281,7 +285,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--n_verts_subsample', default=None,
         help='Number of vertices to subsample.',
-        type=int,
+        type=int_or_none,
     )
     parser.add_argument(
         '--subsample_seed', default=15,
