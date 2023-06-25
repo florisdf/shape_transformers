@@ -9,34 +9,27 @@ EPOCH = 'Training Epoch'
 L2 = 'L2'
 
 
-def get_sweep_results(
-    sweep_id, project="shape_transformers", entity="florisdf", lazy=False,
+def get_run_results(
+    run_id, project="shape_transformers", entity="florisdf", lazy=False,
 ):
-    res_path = Path(f'sweep_{sweep_id}.pkl')
+    res_path = Path(f'run_{run_id}.pkl')
     if res_path.exists() and lazy:
         return pd.read_pickle(res_path)
 
     api = wandb.Api()
 
-    results = []
+    run = api.run(f"{entity}/{project}/{run_id}")
 
-    sweep = api.sweep(f"{entity}/{project}/{sweep_id}")
-    runs = sweep.runs
+    df = run.history(keys=[
+        "Val/L2",
+        "epoch",
+    ])
+    df['val_fold'] = run.config['k_fold_val_fold']
+    df['run_id'] = run.id
 
-    for run in tqdm(runs, leave=False):
-        df_history = run.history(keys=[
-            "Val/L2",
-            "epoch",
-        ])
-        df_history['val_fold'] = run.config['k_fold_val_fold']
-        df_history['run_id'] = run.id
+    for k, v in run.config.items():
+        df[k] = run.config[k]
 
-        for k, v in run.config.items():
-            df_history[k] = run.config[k]
-
-        results.append(df_history)
-
-    df = pd.concat(results, ignore_index=True)
     df.to_pickle(res_path)
 
     return df
