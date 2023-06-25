@@ -9,7 +9,9 @@ command:
 parameters:
   lr:
     distribution: categorical
-    values: [0.1, 0.01, 0.001]
+    values: [0.001, 0.002, 0.005]
+  lr_warmup_steps:
+    value: 500
   k_fold_num_folds:
     value: 5
   k_fold_seed:

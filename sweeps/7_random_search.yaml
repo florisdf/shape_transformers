@@ -1,33 +1,40 @@
 program: train.py
-method: random
+method: grid
 entity: florisdf
 project: shape_transformers
 command:
   - /apollo/fdf/projects/shape_transformers/.venv/bin/python
   - ${program}
   - ${args}
+  - --save_unique
+  - --save_best
+  - --save_last
 parameters:
   lr:
-    distribution: categorical
-    values: [0.1, 0.2]
+    value: 0.005
+  lr_warmup_steps:
+    value: 1000
+  best_metric:
+    value: "L2"
+  num_accum_steps:
+    value: 1
   k_fold_num_folds:
     value: 5
   k_fold_seed:
     value: 15
   k_fold_val_fold:
-    distribution: categorical
-    values: [0, 1, 2, 3, 4]
+    value: 0
   n_verts_subsample:
-    value: 5000
+    value: 6000
   momentum:
-    value: 0.95
+    value: 0.99
   weight_decay:
-    value: 1e-5
+    value: 0.0
   batch_size:
-    value: 108
+    value: 100
   val_batch_size:
     value: 16
   num_epochs:
-    value: 100
+    value: 5000
   num_workers:
     value: 8
