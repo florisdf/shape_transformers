@@ -172,7 +172,7 @@ def render_expression_video(
     writer = None
 
     frames_per_expression = int(frames_per_second * seconds_per_expression)
-    for idx1, idx2 in tqdm(list(zip(idxs, idxs[1:]))):
+    for idx1, idx2 in tqdm(list(zip(idxs, idxs[1:])), leave=False):
         true_rel_verts_1, positions, triangles, _ = select_sample(ds, idx1, device)
         true_rel_verts_2, _, _, _ = select_sample(ds, idx2, device)
         d_alpha = 1 / frames_per_expression
@@ -222,8 +222,18 @@ if __name__ == '__main__':
         action='store_true'
     )
     parser.add_argument(
+        '--render_all_expression_videos',
+        help='If set, render all videos interpolating between all expressions of each subject.',
+        action='store_true'
+    )
+    parser.add_argument(
         '--render_true_pred',
         help='If set, render the true and predicted shapes of the selected subject and expression.',
+        action='store_true'
+    )
+    parser.add_argument(
+        '--render_all_true_preds',
+        help='If set, render all true and predicted shapes of each subject and expression.',
         action='store_true'
     )
     parser.add_argument(
@@ -268,3 +278,18 @@ if __name__ == '__main__':
             args.seconds_per_expression,
             out_dir / f'{subj}_expressions.mp4'
         )
+    if args.render_all_expression_videos:
+        for subj in tqdm(ds.df.label.unique()):
+            render_expression_video(
+                model, ds, subj, args.device,
+                args.frames_per_second,
+                args.seconds_per_expression,
+                out_dir / f'{subj}_expressions.mp4'
+            )
+    if args.render_all_true_preds:
+        for (subj, expr), _ in tqdm(list(ds.df.groupby(['label', 'expression']))):
+            render_true_pred(
+                model, ds, subj, expr, args.device,
+                out_dir / f'{subj}_{expr}_true.jpg',
+                out_dir / f'{subj}_{expr}_pred.jpg'
+            )
